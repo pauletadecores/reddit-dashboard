@@ -1,9 +1,9 @@
 import streamlit as st
-import requests
 import pandas as pd
 import plotly.express as px
 from wordcloud import WordCloud
 import matplotlib.pyplot as plt
+import praw
 
 # ===========================
 # Page configuration
@@ -12,6 +12,19 @@ st.set_page_config(page_title="Topics on Gaza/Israel/USA", layout="wide")
 st.title("📊 Real-Time Topics on Reddit — Gaza / Israel / USA")
 st.markdown(
     "Dashboard showing recent Reddit posts related to Gaza, Palestine, Israel, Flotilla Global Sumud, USA, and Trump."
+)
+
+# ===========================
+# Reddit API credentials (from Streamlit Secrets)
+# ===========================
+CLIENT_ID = st.secrets["reddit"]["client_id"]
+CLIENT_SECRET = st.secrets["reddit"]["client_secret"]
+USER_AGENT = st.secrets["reddit"]["user_agent"]
+
+reddit = praw.Reddit(
+    client_id=CLIENT_ID,
+    client_secret=CLIENT_SECRET,
+    user_agent=USER_AGENT
 )
 
 # ===========================
@@ -26,41 +39,25 @@ keywords = ["gaza", "palestina", "israel", "flotilla global sumud", "eua", "trum
 keywords = [k.lower() for k in keywords]
 
 # ===========================
-# Function to fetch posts from Reddit
+# Function to fetch posts
 # ===========================
-@st.cache_data(ttl=300)  # Cache results for 5 minutes
-def get_reddit_posts(subreddit):
-    url = f"https://www.reddit.com/r/{subreddit}/hot.json?limit=50"
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-                      "(KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36"
-    }
+@st.cache_data(ttl=300)
+def get_reddit_posts(subreddit, limit=50):
     try:
-        r = requests.get(url, headers=headers, timeout=10)
-        st.write(f"Subreddit: {subreddit} — Status code: {r.status_code}")
-        r.raise_for_status()
-        data = r.json().get("data", {})
-        posts = data.get("children", [])
+        posts = []
+        for post in reddit.subreddit(subreddit).hot(limit=limit):
+            posts.append({
+                "title": post.title,
+                "author": post.author.name if post.author else "",
+                "score": post.score,
+                "num_comments": post.num_comments,
+                "subreddit": subreddit,
+                "url": post.url
+            })
+        return pd.DataFrame(posts)
     except Exception as e:
         st.error(f"Error fetching posts from {subreddit}: {e}")
         return pd.DataFrame()
-    
-    if not posts:
-        st.info(f"No posts found for subreddit: {subreddit}")
-        return pd.DataFrame()
-    
-    data_list = []
-    for p in posts:
-        post = p.get("data", {})
-        data_list.append({
-            "title": post.get("title", ""),
-            "author": post.get("author", ""),
-            "score": post.get("score", 0),
-            "num_comments": post.get("num_comments", 0),
-            "subreddit": subreddit,
-            "url": "https://www.reddit.com" + post.get("permalink", "")
-        })
-    return pd.DataFrame(data_list)
 
 # ===========================
 # Aggregate posts from all subreddits
@@ -72,7 +69,7 @@ df = pd.concat(df_list, ignore_index=True) if df_list else pd.DataFrame()
 # Filter by keywords
 # ===========================
 if df.empty:
-    st.warning("No posts fetched from Reddit. Try again later or check the API limits.")
+    st.warning("No posts fetched from Reddit. Check your API credentials or try again later.")
 else:
     mask = df["title"].str.lower().apply(lambda x: any(k in x for k in keywords))
     df_filtered = df[mask]
