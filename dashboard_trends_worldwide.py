@@ -25,25 +25,34 @@ subreddits = ["worldnews", "politics", "news", "MiddleEast", "Israel", "Palestin
 keywords = ["gaza", "palestina", "israel", "flotilla global sumud", "eua", "trump"]
 keywords = [k.lower() for k in keywords]
 
-
 # ===========================
 # Function to fetch posts from Reddit
 # ===========================
 @st.cache_data(ttl=300)  # Cache results for 5 minutes
 def get_reddit_posts(subreddit):
     url = f"https://www.reddit.com/r/{subreddit}/hot.json?limit=50"
-    headers = {"User-Agent": "Mozilla/5.0 (RedditDashboardApp)"}
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+                      "(KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36"
+    }
     try:
         r = requests.get(url, headers=headers, timeout=10)
+        st.write(f"Subreddit: {subreddit} — Status code: {r.status_code}")
         r.raise_for_status()
-        posts = r.json()["data"]["children"]
-    except:
+        data = r.json().get("data", {})
+        posts = data.get("children", [])
+    except Exception as e:
+        st.error(f"Error fetching posts from {subreddit}: {e}")
         return pd.DataFrame()
-
-    data = []
+    
+    if not posts:
+        st.info(f"No posts found for subreddit: {subreddit}")
+        return pd.DataFrame()
+    
+    data_list = []
     for p in posts:
-        post = p["data"]
-        data.append({
+        post = p.get("data", {})
+        data_list.append({
             "title": post.get("title", ""),
             "author": post.get("author", ""),
             "score": post.get("score", 0),
@@ -51,8 +60,7 @@ def get_reddit_posts(subreddit):
             "subreddit": subreddit,
             "url": "https://www.reddit.com" + post.get("permalink", "")
         })
-    return pd.DataFrame(data)
-
+    return pd.DataFrame(data_list)
 
 # ===========================
 # Aggregate posts from all subreddits
@@ -60,24 +68,24 @@ def get_reddit_posts(subreddit):
 df_list = [get_reddit_posts(sr) for sr in subreddits]
 df = pd.concat(df_list, ignore_index=True) if df_list else pd.DataFrame()
 
+# ===========================
+# Filter by keywords
+# ===========================
 if df.empty:
-    st.warning("No posts found.")
+    st.warning("No posts fetched from Reddit. Try again later or check the API limits.")
 else:
-    # ===========================
-    # Filter posts by keywords
-    # ===========================
     mask = df["title"].str.lower().apply(lambda x: any(k in x for k in keywords))
     df_filtered = df[mask]
 
     if df_filtered.empty:
-        st.warning("No posts found for the specified topics.")
+        st.warning("No posts found matching the specified keywords.")
     else:
-        st.subheader("🔥 Recent posts related to the selected topics")
+        st.subheader("🔥 Recent posts related to selected topics")
         st.dataframe(
             df_filtered[["title", "subreddit", "score", "num_comments"]]
             .sort_values(by="score", ascending=False),
-            width='stretch'
-        )  # On Reddit, the score of a post is a measure of community popularity or approval
+            use_container_width=True
+        )
 
         # ===========================
         # Engagement chart (Top 10)
@@ -101,7 +109,7 @@ else:
         text = " ".join(df_filtered["title"].tolist())
         if text.strip():
             wordcloud = WordCloud(width=800, height=400, background_color="white").generate(text)
-            fig_wc, ax = plt.subplots(figsize=(10, 5))
+            fig_wc, ax = plt.subplots(figsize=(10,5))
             ax.imshow(wordcloud, interpolation="bilinear")
             ax.axis("off")
             st.pyplot(fig_wc)
