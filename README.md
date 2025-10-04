@@ -1,45 +1,39 @@
-# 📊 Real-Time Reddit Topics Dashboard — Gaza / Israel / USA
+# Reddit Dashboard — Real-Time Topics on Gaza/Israel/USA
 
-[![Streamlit](https://img.shields.io/badge/Streamlit-App-green)](https://share.streamlit.io)  
-[![Python](https://img.shields.io/badge/Python-3.8+-blue)](https://www.python.org/)
+This Streamlit dashboard shows real-time trending posts from Reddit related to Gaza, Palestine, Israel, Flotilla Global Sumud, USA, and Trump.
 
----
+## Features
 
-## Overview
+- Aggregates posts from multiple subreddits: `worldnews`, `politics`, `news`, `MiddleEast`, `Israel`, `Palestine`
+- Filters posts by keywords
+- Displays top 10 posts by score (upvotes)
+- Shows a Word Cloud of post titles
+- Updates every 5 minutes
 
-This Streamlit dashboard fetches and displays **recent Reddit posts** related to geopolitical topics such as:
+## How to Run
 
-- Gaza  
-- Palestine  
-- Israel  
-- Flotilla Global Sumud  
-- USA  
-- Trump  
+1. Create a Reddit app to get your `client_id` and `client_secret`: [Reddit Apps](https://www.reddit.com/prefs/apps)
+2. Set up a Streamlit Secret for your credentials:
 
-It allows users to:  
+[reddit]
+client_id = "YOUR_CLIENT_ID"
+client_secret = "YOUR_CLIENT_SECRET"
+user_agent = "dashboard_app by /u/YOUR_USERNAME"
 
-- See the **latest posts** from relevant subreddits  
-- Filter posts based on **keywords**  
-- View a **Top 10 engagement chart** (upvotes vs. comments)  
-- Generate a **word cloud** from post titles  
 
-The data is updated **in real time** and cached for 5 minutes for better performance.
+3. Install requirements:
+pip install -r requirements.txt
 
----
 
-## Relevant Subreddits
+4. Run locally:
 
-The dashboard fetches posts from these subreddits:
+streamlit run reddit_dashboard_worldwide.py
 
-- `worldnews`  
-- `politics`  
-- `news`  
-- `MiddleEast`  
-- `Israel`  
-- `Palestine`  
 
----
+5. Deploy on [Streamlit Cloud](https://streamlit.io/cloud) and it will automatically use the secrets.
 
-## Keywords
+## Notes
 
-The posts are filtered by these keywords: gaza, palestina, israel, flotilla global sumud, eua, trump
+- The dashboard caches results for 5 minutes to reduce API calls.
+- Make sure your Reddit credentials are correct to avoid 403 errors.
+- Works both locally and on Streamlit Cloud.
