@@ -14,11 +14,12 @@ This Streamlit dashboard shows real-time trending posts from Reddit related to G
 
 1. Create a Reddit app to get your `client_id` and `client_secret`: [Reddit Apps](https://www.reddit.com/prefs/apps)
 2. Set up a Streamlit Secret for your credentials:
-
-´´´[reddit]
+´´´
+[reddit]
 client_id = "YOUR_CLIENT_ID"
 client_secret = "YOUR_CLIENT_SECRET"
-user_agent = "dashboard_app by /u/YOUR_USERNAME"´´´
+user_agent = "dashboard_app by /u/YOUR_USERNAME"
+´´´
 
 
 4. Install requirements:
