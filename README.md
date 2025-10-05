@@ -24,13 +24,14 @@ This Streamlit dashboard shows real-time trending posts from Reddit related to G
 
 
 3. Install requirements:
+<pre> ``` 
 pip install -r requirements.txt
-
+``` </pre>
 
 4. Run locally:
-
+<pre> ``` 
 streamlit run reddit_dashboard_worldwide.py
-
+``` </pre>
 
 5. Deploy on [Streamlit Cloud](https://streamlit.io/cloud) and it will automatically use the secrets.
 
